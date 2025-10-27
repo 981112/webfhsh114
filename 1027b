@@ -1,0 +1,64 @@
+<html>
+<head>
+    <title>位移及變形</title>
+        <style>
+            #d7{
+           height: 50px;
+                width:400px;
+                background: seagreen;
+ }  #d8{
+           height: 50px;
+                width:400px;
+                background: seagreen;
+                position:relative;
+                top: 20px;
+                left:40px;
+ } #d9{
+           height: 50px;
+               
+ } #d10{
+           height: 50px;
+                width:400px;
+                background:solid rgb(9, 10, 10);
+                position: relative;
+                left: 50px;
+                top: -50px;
+               
+ } #d11{
+           height: 50px;
+                width:400px;
+                background: rgb(243, 154, 221);
+                
+ } #d12{
+           height: 50px;
+                width:400px;
+                background: rgb(244, 252, 248);
+                position: absolute;
+                top: 20px;
+                left:40px;
+ }#d13{
+           height: 50px;
+                width:400px;
+                background: rgb(243, 154, 221);
+                transform: rotate(90deg);translate: (50px,20px);scale: (1,2);
+ }
+
+        </style>
+    
+</head>
+<body><div id="d7"></div>
+    <div id="d8"></div>
+    <div id="d9"></div>
+    <div id="d10"></div>
+     <div id="d11"></div>
+      <div id="d12"></div>
+     <div id="d13"></div>
+</body>
+
+
+
+
+
+
+
+</html>
