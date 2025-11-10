@@ -1,15 +1,37 @@
 <html>
     <head>
         <title>js簡介</title>
-        <script>
-            function hello(){
-                console.log("     ");
-                alert("   ");
+        <script>{
+           
+           function sum(){
+            var n1=parseInt(document.getElementById("n1").value);
+             var n2=parseInt(document.getElementById("n2").value);
+             var n3=document.getElementById("n3");
+             var ans=document.getElementById("ans");
+             if(isNaN(n1)){n1=0;
+           }n2=isNaN(n2)?0:n2;
+           n3.value=n1+n2;
+           ans.innerHTML=+n2;}
+
+                alert("訊息方塊  ");訊息方塊不回傳
+                prompt("提示語");確定回傳字串取消回傳null
+                confirm("確定");確認用確定回傳ture取消回傳false
+                parseInt();將字串轉成整數,不是數字回傳NaN
+
             }
 
         </script>
     </head>
     <body>
+<input type="text" value="文字內容">文字內容<br>
+<input type="placeholder" value="輸入文字">
+<input type="password" value="1234">
+<input type="number" placeholder="數字"><br>
+<input id="dt1" type="datetime-local"><br>
+<input id="color" type="color" value="#0000FF">
+<input type="number" id="n1">+<input type="number" id="n2">
+<buttun onclick="sum()";"></buttun>
+<div id="ans"></div>
         <buttom onclick="hello();">按鈕</buttom>
     </body>
 </html>
