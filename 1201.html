@@ -1,0 +1,58 @@
+<html>
+    <head>
+        <title>翻牌記憶遊戲</title>
+        <style>
+           #board {
+                width: 80px;
+                display:grid;
+                grid:repeat(3,90px)/ repeat(4,90px);
+            }
+            .card {
+                width:80px
+            }
+
+        </style>
+        <script> function pickCard() {
+            var card=event.target;
+            if(p1<0){
+                p1=card;
+                card.src=`pic/${p1.num}.png`;
+            return;}
+            else if(p2<0){
+            p2=card;
+        card.src=`pic/${card.num}.png`;
+        if(p1.num ==p2.num){
+            pairs++;
+            if(pairs<6);
+            p1=-1 ;p2=-1;
+        }
+        if(p1.num != p2.num){
+            setTimeout(()=>{p1.src=`pic/q.png`;
+                p2.src=`pic/q.png`;
+                p1=-1;p2=-1;},1000);}
+
+            }
+        }
+            function gamestart(){
+                var card=[1,1,2,2,3,3,4,4,5,5,6,6];
+                cards.sort(()=>{return Math.random()-0.5;}) ;
+            var board=document.getElementById("board");
+            Array.from(board.children).forEach((a)=>{board.removeChild(a);});
+           cards.forEach((n)=>{
+            var a=document.createElement("ing");
+            a.className="card";
+            a.src="pic/q.png";
+            a.num=n;
+            board.appendChild(a);
+            });}
+            setTimeout(()=>{
+                Array.from(document.getElementsByClassName("card")).forEach((a)=>{a.src="pic/q.png";});
+            })
+        </script>
+    </head>
+    <body>
+            </ing>
+        </div id="board"></div>
+        <button onclick="gamestart();">遊戲開始</button>
+    </body>
+</html>
