@@ -1,0 +1,295 @@
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>閃耀小白球接球遊戲 - Vibe Coding 專題</title>
+    <style>
+        :root {
+            --bg-color: #0a192f;
+            --ball-color: #ffffff;
+            --paddle-color: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+            --text-color: #e6f1ff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 80vh;
+            border: 2px solid #233554;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+        }
+
+        .score-board {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+
+        #menu, #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(10, 25, 47, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid #233554;
+            width: 80%;
+            display: none;
+        }
+
+        #menu { display: block; }
+
+        button {
+            background: var(--paddle-color);
+            border: none;
+            padding: 12px 30px;
+            color: white;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+        }
+
+        .instructions {
+            font-size: 0.9rem;
+            color: #8892b0;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="ui-overlay">
+            <div class="score-board">分數: <span id="currentScore">0</span></div>
+            <div class="score-board">最高紀錄: <span id="highScore">0</span></div>
+        </div>
+
+        <!-- 開始選單 -->
+        <div id="menu">
+            <h1>閃耀小白球</h1>
+            <p>接住掉落的小球，別讓它落地！</p>
+            <button onclick="startGame()">開始遊戲</button>
+            <div class="instructions">電腦：左右方向鍵 | 手機：左右滑動</div>
+        </div>
+
+        <!-- 遊戲結束選單 -->
+        <div id="game-over">
+            <h1 style="color: #ff4d4d;">GAME OVER</h1>
+            <p>最終得分: <span id="finalScore">0</span></p>
+            <button onclick="startGame()">再試一次</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('currentScore');
+        const highScoreEl = document.getElementById('highScore');
+        const finalScoreEl = document.getElementById('finalScore');
+        const menu = document.getElementById('menu');
+        const gameOverMenu = document.getElementById('game-over');
+
+        // 遊戲狀態
+        let score = 0;
+        let highScore = localStorage.getItem('ballGameHighScore') || 0;
+        let gameActive = false;
+        let animationId;
+
+        // 遊戲物件屬性
+        const paddle = {
+            width: 100,
+            height: 15,
+            x: 0,
+            y: 0,
+            speed: 8
+        };
+
+        const ball = {
+            x: 0,
+            y: 0,
+            radius: 10,
+            speedY: 2,
+            baseSpeed: 2
+        };
+
+        // 控制狀態
+        let leftPressed = false;
+        let rightPressed = false;
+
+        // 初始化畫布尺寸
+        function resize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            paddle.y = canvas.height - 40;
+            paddle.x = (canvas.width - paddle.width) / 2;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 監聽按鍵
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') leftPressed = true;
+            if (e.key === 'ArrowRight') rightPressed = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') leftPressed = false;
+            if (e.key === 'ArrowRight') rightPressed = false;
+        });
+
+        // 監聽觸控
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            paddle.x = touchX - paddle.width / 2;
+        }, { passive: false });
+
+        function initBall() {
+            ball.x = Math.random() * (canvas.width - ball.radius * 2) + ball.radius;
+            ball.y = -20;
+            // 難度曲線：根據分數增加初始速度
+            ball.speedY = ball.baseSpeed + (score * 0.2);
+        }
+
+        function startGame() {
+            score = 0;
+            highScore = localStorage.getItem('ballGameHighScore') || 0;
+            scoreEl.innerText = score;
+            highScoreEl.innerText = highScore;
+            gameActive = true;
+            menu.style.display = 'none';
+            gameOverMenu.style.display = 'none';
+            initBall();
+            resize();
+            gameLoop();
+        }
+
+        function gameOver() {
+            gameActive = false;
+            cancelAnimationFrame(animationId);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('ballGameHighScore', highScore);
+            }
+            finalScoreEl.innerText = score;
+            gameOverMenu.style.display = 'block';
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製橫桿
+            ctx.beginPath();
+            const gradient = ctx.createLinearGradient(paddle.x, 0, paddle.x + paddle.width, 0);
+            gradient.addColorStop(0, '#00d2ff');
+            gradient.addColorStop(1, '#3a7bd5');
+            ctx.fillStyle = gradient;
+            ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5);
+            ctx.fill();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00d2ff';
+            ctx.closePath();
+
+            // 繪製小白球 (發光特效)
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ffffff";
+            ctx.fill();
+            ctx.closePath();
+            
+            // 重設陰影以免影響後續繪製
+            ctx.shadowBlur = 0;
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            // 移動橫桿
+            if (leftPressed && paddle.x > 0) paddle.x -= paddle.speed;
+            if (rightPressed && paddle.x < canvas.width - paddle.width) paddle.x += paddle.speed;
+
+            // 限制橫桿不超出畫布 (針對觸控)
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
+
+            // 移動球
+            ball.y += ball.speedY;
+
+            // 碰撞偵測 (判斷球是否落在橫桿頂部範圍)
+            if (
+                ball.y + ball.radius >= paddle.y && 
+                ball.y + ball.radius <= paddle.y + paddle.height &&
+                ball.x >= paddle.x && 
+                ball.x <= paddle.x + paddle.width
+            ) {
+                score++;
+                scoreEl.innerText = score;
+                initBall(); // 接到球後，重置球到上方
+            }
+
+            // 失敗判定 (球掉出畫面底部)
+            if (ball.y - ball.radius > canvas.height) {
+                gameOver();
+            }
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // 初始化顯示分數
+        highScoreEl.innerText = highScore;
+
+    </script>
+</body>
+</html>

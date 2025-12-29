@@ -47,7 +47,7 @@
             var data=Array.from(JSON.parse(ranking));
 
         }
-        else if(game_score>data[4].score){
+        elseif(game_score>data[4].score){
             data.pop();
             data.push({"name":prompt("請輸入你的名稱"),"score":game_score,"time":game_time});
         }
