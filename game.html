@@ -204,7 +204,6 @@
     const colorDots = document.querySelectorAll('.color-dot');
 
     let score = 0;
-    // 【修改點 1】直接設為 0，不再從 localStorage 讀取
     let highScore = 0; 
     let gameActive = false;
     let animationId;
@@ -266,7 +265,6 @@
 
     function startGame() {
         score = 0;
-        // 【修改點 2】每次開始不需要重新讀取，直接顯示目前的 highScore 變數
         scoreEl.innerText = score;
         highScoreEl.innerText = highScore;
         gameActive = true;
@@ -287,10 +285,9 @@
         settingsPanel.classList.remove('locked');
         if (score > highScore) {
             highScore = score;
-            // 【修改點 3】移除 localStorage.setItem，只更新變數
         }
         finalScoreEl.innerText = score;
-        highScoreEl.innerText = highScore; // 確保畫面上同步更新
+        highScoreEl.innerText = highScore; 
         gameOverMenu.style.display = 'block';
     }
 
@@ -301,9 +298,8 @@
         settingsPanel.classList.remove('locked');
         if (score > highScore) {
             highScore = score;
-            // 【修改點 4】移除 localStorage.setItem，只更新變數
-        }
-        highScoreEl.innerText = highScore; // 確保畫面上同步更新
+            }
+        highScoreEl.innerText = highScore; 
         winScreen.style.display = 'block';
     }
 
