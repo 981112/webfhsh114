@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小白球接球遊戲 - 高速挑戰版</title>
+    <title>小白球 - 眼力挑戰版</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -157,6 +157,7 @@
                 <div class="score-text">最高紀錄: <span id="highScore">0</span></div>
             </div>
             <div class="settings" id="settingsPanel">
+                <div style="font-size: 0.8rem; margin-bottom: 5px; color: #0ed68a; font-weight: bold;">球的顏色</div>
                 <div class="color-options" id="colorOptions">
                     <div class="color-dot active" style="background: #ffffff;" data-color="#ffffff"></div>
                     <div class="color-dot" style="background: #ff0000;" data-color="#ff0000"></div>
@@ -171,8 +172,8 @@
         </div>
 
         <div id="menu">
-            <h1 style="color: #ff0055; font-size: 2.5rem; margin-bottom: 10px;">小白球接球遊戲</h1>
-            <p>目標：達到 20 分即可獲勝！ (初始速度：5-7)</p>
+            <h1 style="color: #ff0055; font-size: 2.5rem; margin-bottom: 10px;">小白球-光速版</h1>
+            <p>目標：達到 20 分即可獲勝！ (鼠標控制下方橫桿擊球)</p>
             <button class="btn-main" onclick="startGame()">開始挑戰</button>
         </div>
 
@@ -190,197 +191,195 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreEl = document.getElementById('currentScore');
-        const highScoreEl = document.getElementById('highScore');
-        const finalScoreEl = document.getElementById('finalScore');
-        const menu = document.getElementById('menu');
-        const gameOverMenu = document.getElementById('game-over');
-        const winScreen = document.getElementById('win-screen');
-        const settingsPanel = document.getElementById('settingsPanel');
-        const body = document.body;
-        const colorDots = document.querySelectorAll('.color-dot');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('currentScore');
+    const highScoreEl = document.getElementById('highScore');
+    const finalScoreEl = document.getElementById('finalScore');
+    const menu = document.getElementById('menu');
+    const gameOverMenu = document.getElementById('game-over');
+    const winScreen = document.getElementById('win-screen');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const body = document.body;
+    const colorDots = document.querySelectorAll('.color-dot');
 
-        let score = 0;
-        let highScore = localStorage.getItem('ballGameHighScore_V4') || 0;
-        let gameActive = false;
-        let animationId;
-        let selectedBallColor = "#ffffff";
+    let score = 0;
+    // 【修改點 1】直接設為 0，不再從 localStorage 讀取
+    let highScore = 0; 
+    let gameActive = false;
+    let animationId;
+    let selectedBallColor = "#ffffff";
 
-        colorDots.forEach(dot => {
-            dot.addEventListener('click', () => {
-                if (gameActive) return;
-                colorDots.forEach(d => d.classList.remove('active'));
-                dot.classList.add('active');
-                selectedBallColor = dot.getAttribute('data-color');
-            });
+    colorDots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            if (gameActive) return;
+            colorDots.forEach(d => d.classList.remove('active'));
+            dot.classList.add('active');
+            selectedBallColor = dot.getAttribute('data-color');
         });
+    });
 
-        const paddle = {
-            width: 120,
-            height: 15,
-            x: 0,
-            y: 0
-        };
+    const paddle = {
+        width: 120,
+        height: 15,
+        x: 0,
+        y: 0
+    };
 
-        const ball = {
-            x: 0,
-            y: 0,
-            radius: 18,
-            speedX: 0,
-            speedY: 0,
-            maxSpeed: 18 // 配合較高的初始速度，適度調高極限速度
-        };
+    const ball = {
+        x: 0,
+        y: 0,
+        radius: 18,
+        speedX: 0,
+        speedY: 0,
+        maxSpeed: 18 
+    };
 
-        function resize() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            paddle.y = canvas.height - 50;
-            if (!gameActive) {
-                paddle.x = (canvas.width - paddle.width) / 2;
-            }
+    function resize() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        paddle.y = canvas.height - 50;
+        if (!gameActive) {
+            paddle.x = (canvas.width - paddle.width) / 2;
         }
+    }
 
-        window.addEventListener('resize', resize);
-        resize();
+    window.addEventListener('resize', resize);
+    resize();
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (!gameActive) return;
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            paddle.x = mouseX - paddle.width / 2;
-            if (paddle.x < 0) paddle.x = 0;
-            if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
-        });
+    canvas.addEventListener('mousemove', (e) => {
+        if (!gameActive) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        paddle.x = mouseX - paddle.width / 2;
+        if (paddle.x < 0) paddle.x = 0;
+        if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
+    });
 
-        function initBall() {
-            ball.x = Math.random() * (canvas.width - ball.radius * 2) + ball.radius;
-            ball.y = 100;
-            // 初始速度調整為 5 到 7
-            const getRandomSpeed = () => Math.random() * (7 - 5) + 5;
-            ball.speedX = getRandomSpeed() * (Math.random() > 0.5 ? 1 : -1);
-            ball.speedY = getRandomSpeed();
-        }
+    function initBall() {
+        ball.x = Math.random() * (canvas.width - ball.radius * 2) + ball.radius;
+        ball.y = 100;
+        const getRandomSpeed = () => Math.random() * (7 - 5) + 5;
+        ball.speedX = getRandomSpeed() * (Math.random() > 0.5 ? 1 : -1);
+        ball.speedY = getRandomSpeed();
+    }
 
-        function startGame() {
-            score = 0;
-            highScore = localStorage.getItem('ballGameHighScore_V4') || 0;
-            scoreEl.innerText = score;
-            highScoreEl.innerText = highScore;
-            gameActive = true;
-            menu.style.display = 'none';
-            gameOverMenu.style.display = 'none';
-            winScreen.style.display = 'none';
-            body.classList.add('game-playing');
-            settingsPanel.classList.add('locked');
-            initBall();
-            resize();
-            gameLoop();
-        }
-
-        function gameOver() {
-            gameActive = false;
-            cancelAnimationFrame(animationId);
-            body.classList.remove('game-playing');
-            settingsPanel.classList.remove('locked');
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('ballGameHighScore_V4', highScore);
-            }
-            finalScoreEl.innerText = score;
-            gameOverMenu.style.display = 'block';
-        }
-
-        function gameWin() {
-            gameActive = false;
-            cancelAnimationFrame(animationId);
-            body.classList.remove('game-playing');
-            settingsPanel.classList.remove('locked');
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('ballGameHighScore_V4', highScore);
-            }
-            winScreen.style.display = 'block';
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 繪製邊牆
-            ctx.strokeStyle = '#ff0055';
-            ctx.lineWidth = 4;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#ff0055';
-            ctx.strokeRect(2, 2, canvas.width - 4, canvas.height + 10);
-            
-            // 繪製橫桿
-            ctx.beginPath();
-            const grad = ctx.createLinearGradient(paddle.x, 0, paddle.x + paddle.width, 0);
-            grad.addColorStop(0, '#ff0055');
-            grad.addColorStop(1, '#ff4d4d');
-            ctx.fillStyle = grad;
-            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
-            
-            // 繪製球
-            ctx.shadowBlur = 0;
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fillStyle = selectedBallColor;
-            ctx.fill();
-            ctx.closePath();
-        }
-
-        function update() {
-            if (!gameActive) return;
-
-            ball.x += ball.speedX;
-            ball.y += ball.speedY;
-
-            if (ball.x + ball.radius >= canvas.width - 2 || ball.x - ball.radius <= 2) {
-                ball.speedX *= -1;
-                ball.x = ball.x - ball.radius <= 2 ? ball.radius + 3 : canvas.width - ball.radius - 3;
-            }
-            if (ball.y - ball.radius <= 2) {
-                ball.speedY *= -1;
-                ball.y = ball.radius + 3;
-            }
-
-            if (
-                ball.y + ball.radius >= paddle.y && 
-                ball.y - ball.radius <= paddle.y + paddle.height &&
-                ball.x >= paddle.x && 
-                ball.x <= paddle.x + paddle.width &&
-                ball.speedY > 0
-            ) {
-                ball.speedY *= -1;
-                score++;
-                scoreEl.innerText = score;
-
-                if (score >= 20) {
-                    gameWin();
-                    return;
-                }
-
-                if (Math.abs(ball.speedY) < ball.maxSpeed) {
-                    ball.speedY *= 1.05;
-                    ball.speedX *= 1.05;
-                }
-            }
-
-            if (ball.y - ball.radius > canvas.height) {
-                gameOver();
-            }
-        }
-
-        function gameLoop() {
-            if (!gameActive) return;
-            update();
-            draw();
-            animationId = requestAnimationFrame(gameLoop);
-        }
-
+    function startGame() {
+        score = 0;
+        // 【修改點 2】每次開始不需要重新讀取，直接顯示目前的 highScore 變數
+        scoreEl.innerText = score;
         highScoreEl.innerText = highScore;
-    </script>
+        gameActive = true;
+        menu.style.display = 'none';
+        gameOverMenu.style.display = 'none';
+        winScreen.style.display = 'none';
+        body.classList.add('game-playing');
+        settingsPanel.classList.add('locked');
+        initBall();
+        resize();
+        gameLoop();
+    }
+
+    function gameOver() {
+        gameActive = false;
+        cancelAnimationFrame(animationId);
+        body.classList.remove('game-playing');
+        settingsPanel.classList.remove('locked');
+        if (score > highScore) {
+            highScore = score;
+            // 【修改點 3】移除 localStorage.setItem，只更新變數
+        }
+        finalScoreEl.innerText = score;
+        highScoreEl.innerText = highScore; // 確保畫面上同步更新
+        gameOverMenu.style.display = 'block';
+    }
+
+    function gameWin() {
+        gameActive = false;
+        cancelAnimationFrame(animationId);
+        body.classList.remove('game-playing');
+        settingsPanel.classList.remove('locked');
+        if (score > highScore) {
+            highScore = score;
+            // 【修改點 4】移除 localStorage.setItem，只更新變數
+        }
+        highScoreEl.innerText = highScore; // 確保畫面上同步更新
+        winScreen.style.display = 'block';
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff0055';
+        ctx.strokeRect(2, 2, canvas.width - 4, canvas.height + 10);
+        
+        ctx.beginPath();
+        const grad = ctx.createLinearGradient(paddle.x, 0, paddle.x + paddle.width, 0);
+        grad.addColorStop(0, '#ff0055');
+        grad.addColorStop(1, '#ff4d4d');
+        ctx.fillStyle = grad;
+        ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+        
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = selectedBallColor;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function update() {
+        if (!gameActive) return;
+
+        ball.x += ball.speedX;
+        ball.y += ball.speedY;
+
+        if (ball.x + ball.radius >= canvas.width - 2 || ball.x - ball.radius <= 2) {
+            ball.speedX *= -1;
+            ball.x = ball.x - ball.radius <= 2 ? ball.radius + 3 : canvas.width - ball.radius - 3;
+        }
+        if (ball.y - ball.radius <= 2) {
+            ball.speedY *= -1;
+            ball.y = ball.radius + 3;
+        }
+
+        if (
+            ball.y + ball.radius >= paddle.y && 
+            ball.y - ball.radius <= paddle.y + paddle.height &&
+            ball.x >= paddle.x && 
+            ball.x <= paddle.x + paddle.width &&
+            ball.speedY > 0
+        ) {
+            ball.speedY *= -1;
+            score++;
+            scoreEl.innerText = score;
+
+            if (score >= 20) {
+                gameWin();
+                return;
+            }
+
+            if (Math.abs(ball.speedY) < ball.maxSpeed) {
+                ball.speedY *= 1.05;
+                ball.speedX *= 1.05;
+            }
+        }
+
+        if (ball.y - ball.radius > canvas.height) {
+            gameOver();
+        }
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        update();
+        draw();
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    highScoreEl.innerText = highScore;
+</script>
 </body>
 </html>
