@@ -3,379 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小白球 - 眼力挑戰版</title>
+    <title>小白球 - 基礎入門版</title>
     <style>
-        :root {
-            --bg-color: #000000;
-            --text-color: #e6f1ff;
-            --paddle-color: linear-gradient(90deg, #ff0055 0%, #ff4d4d 100%);
-            --neon-red: #ff0055;
-            --neon-green: #00ff99;
-        }
-
+        /* 1. 網頁基本設定：黑底白字，內容置中 */
         body {
             margin: 0;
-            padding: 0;
+            background-color: #222; /* 深灰色背景 */
+            color: white;
+            font-family: sans-serif;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* 由上往下排列 */
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-            cursor: default;
+            height: 100vh; /* 滿版高度 */
         }
 
-        body.game-playing {
-            cursor: none;
+        /* 2. 分數板：簡單的文字 */
+        .score-board {
+            font-size: 24px;
+            margin-bottom: 10px;
         }
 
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            height: 80vh;
-            border: 2px solid #330011;
-            border-radius: 12px;
-            box-shadow: 0 0 30px rgba(255, 0, 85, 0.15);
-            background: #000000;
-        }
-
+        /* 3. 遊戲畫布：加上白色邊框 */
         canvas {
+            background-color: #000; /* 畫布是黑的 */
+            border: 2px solid white; /* 白框 */
             display: block;
-            width: 100%;
-            height: 100%;
+            cursor: none; /* 移入畫布時隱藏滑鼠 */
         }
 
-        .ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            pointer-events: none;
-        }
-
-        .settings {
-            pointer-events: auto;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #330011;
-            text-align: center;
-            backdrop-filter: blur(5px);
-            transition: opacity 0.3s;
-        }
-
-        .settings.locked {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .score-text {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-shadow: 0 0 10px rgba(255, 0, 85, 0.6);
-        }
-
-        .color-options {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .color-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid transparent;
+        /* 4. 按鈕樣式 */
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 18px;
             cursor: pointer;
-        }
-
-        .color-dot.active {
-            border-color: #fff;
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-        }
-
-        #menu, #game-over, #win-screen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(15, 0, 5, 0.98);
-            padding: 3rem;
-            border-radius: 20px;
-            border: 2px solid var(--neon-red);
-            width: 70%;
-            display: none;
-            z-index: 10;
-        }
-
-        #win-screen {
-            border-color: var(--neon-green);
-        }
-
-        #menu { display: block; }
-
-        .btn-main {
-            background: var(--paddle-color);
-            border: none;
-            padding: 15px 40px;
+            background-color: #4CAF50;
             color: white;
-            font-size: 1.2rem;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 20px;
-            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
         }
 
-        .btn-win {
-            background: linear-gradient(90deg, #00ff99 0%, #00ccff 100%);
-        }
-
-        .btn-main:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 0, 85, 0.4);
+        /* 隱藏區塊用 */
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-        
-        <div class="ui-panel">
-            <div class="stats">
-                <div class="score-text">分數: <span id="currentScore">0</span> / 20</div>
-                <div class="score-text">最高紀錄: <span id="highScore">0</span></div>
-            </div>
-            <div class="settings" id="settingsPanel">
-                <div style="font-size: 0.8rem; margin-bottom: 5px; color: #0ed68a; font-weight: bold;">球的顏色</div>
-                <div class="color-options" id="colorOptions">
-                    <div class="color-dot active" style="background: #ffffff;" data-color="#ffffff"></div>
-                    <div class="color-dot" style="background: #ff0000;" data-color="#ff0000"></div>
-                    <div class="color-dot" style="background: #ff7f00;" data-color="#ff7f00"></div>
-                    <div class="color-dot" style="background: #ffff00;" data-color="#ffff00"></div>
-                    <div class="color-dot" style="background: #00ff00;" data-color="#00ff00"></div>
-                    <div class="color-dot" style="background: #0000ff;" data-color="#0000ff"></div>
-                    <div class="color-dot" style="background: #4b0082;" data-color="#4b0082"></div>
-                    <div class="color-dot" style="background: #9400d3;" data-color="#9400d3"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="menu">
-            <h1 style="color: #ff0055; font-size: 2.5rem; margin-bottom: 10px;">小白球-光速版</h1>
-            <p>目標：達到 20 分即可獲勝！ (鼠標控制下方橫桿擊球)</p>
-            <button class="btn-main" onclick="startGame()">開始挑戰</button>
-        </div>
-
-        <div id="game-over">
-            <h1 style="color: #ff4d4d;">挑戰失敗</h1>
-            <p style="font-size: 1.5rem;">最終得分: <span id="finalScore">0</span></p>
-            <button class="btn-main" onclick="startGame()">再試一次</button>
-        </div>
-
-        <div id="win-screen">
-            <h1 style="color: #00ff99; font-size: 2.5rem;">恭喜獲勝！</h1>
-            <p style="font-size: 1.2rem;">你成功達到了 20 分目標！</p>
-            <button class="btn-main btn-win" onclick="startGame()">重新挑戰</button>
-        </div>
+    <div class="score-board">
+        分數: <span id="score">0</span> / 20
     </div>
 
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <h2 id="msg">按下按鈕開始遊戲</h2>
+    <button id="startBtn" onclick="startGame()">開始遊戲</button>
+
     <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('currentScore');
-    const highScoreEl = document.getElementById('highScore');
-    const finalScoreEl = document.getElementById('finalScore');
-    const menu = document.getElementById('menu');
-    const gameOverMenu = document.getElementById('game-over');
-    const winScreen = document.getElementById('win-screen');
-    const settingsPanel = document.getElementById('settingsPanel');
-    const body = document.body;
-    const colorDots = document.querySelectorAll('.color-dot');
+        // --- 1. 變數設定 ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d'); // 取得畫筆
+        const scoreEl = document.getElementById('score');
+        const msgEl = document.getElementById('msg');
+        const startBtn = document.getElementById('startBtn');
 
-    let score = 0;
-    let highScore = 0; 
-    let gameActive = false;
-    let animationId;
-    let selectedBallColor = "#ffffff";
+        let score = 0;
+        let isGameRunning = false;
+        let animationId; // 用來控制動畫暫停
 
-    colorDots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            if (gameActive) return;
-            colorDots.forEach(d => d.classList.remove('active'));
-            dot.classList.add('active');
-            selectedBallColor = dot.getAttribute('data-color');
+        // 定義擋板 (Paddle)
+        const paddle = {
+            width: 100,
+            height: 10,
+            x: 250, // 初始位置 (置中)
+            y: 380, // 固定在底部
+            color: '#0095DD' // 藍色
+        };
+
+        // 定義球 (Ball)
+        const ball = {
+            x: 300,
+            y: 200,
+            radius: 10,
+            speedX: 4, // 固定水平速度
+            speedY: 4, // 固定垂直速度
+            color: '#FFFFFF' // 白色
+        };
+
+        // --- 2. 監聽滑鼠移動 ---
+        canvas.addEventListener('mousemove', function(e) {
+            // 計算滑鼠在畫布內的 X 位置
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+
+            // 讓擋板中心對準滑鼠
+            paddle.x = mouseX - paddle.width / 2;
+
+            // 防止擋板跑出畫布左右邊界
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
         });
-    });
 
-    const paddle = {
-        width: 120,
-        height: 15,
-        x: 0,
-        y: 0
-    };
+        // --- 3. 遊戲核心功能 ---
 
-    const ball = {
-        x: 0,
-        y: 0,
-        radius: 18,
-        speedX: 0,
-        speedY: 0,
-        maxSpeed: 18 
-    };
-
-    function resize() {
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-        paddle.y = canvas.height - 50;
-        if (!gameActive) {
-            paddle.x = (canvas.width - paddle.width) / 2;
-        }
-    }
-
-    window.addEventListener('resize', resize);
-    resize();
-
-    canvas.addEventListener('mousemove', (e) => {
-        if (!gameActive) return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        paddle.x = mouseX - paddle.width / 2;
-        if (paddle.x < 0) paddle.x = 0;
-        if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
-    });
-
-    function initBall() {
-        ball.x = Math.random() * (canvas.width - ball.radius * 2) + ball.radius;
-        ball.y = 100;
-        const getRandomSpeed = () => Math.random() * (7 - 5) + 5;
-        ball.speedX = getRandomSpeed() * (Math.random() > 0.5 ? 1 : -1);
-        ball.speedY = getRandomSpeed();
-    }
-
-    function startGame() {
-        score = 0;
-        scoreEl.innerText = score;
-        highScoreEl.innerText = highScore;
-        gameActive = true;
-        menu.style.display = 'none';
-        gameOverMenu.style.display = 'none';
-        winScreen.style.display = 'none';
-        body.classList.add('game-playing');
-        settingsPanel.classList.add('locked');
-        initBall();
-        resize();
-        gameLoop();
-    }
-
-    function gameOver() {
-        gameActive = false;
-        cancelAnimationFrame(animationId);
-        body.classList.remove('game-playing');
-        settingsPanel.classList.remove('locked');
-        if (score > highScore) {
-            highScore = score;
-        }
-        finalScoreEl.innerText = score;
-        highScoreEl.innerText = highScore; 
-        gameOverMenu.style.display = 'block';
-    }
-
-    function gameWin() {
-        gameActive = false;
-        cancelAnimationFrame(animationId);
-        body.classList.remove('game-playing');
-        settingsPanel.classList.remove('locked');
-        if (score > highScore) {
-            highScore = score;
-            }
-        highScoreEl.innerText = highScore; 
-        winScreen.style.display = 'block';
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#ff0055';
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#ff0055';
-        ctx.strokeRect(2, 2, canvas.width - 4, canvas.height + 10);
-        
-        ctx.beginPath();
-        const grad = ctx.createLinearGradient(paddle.x, 0, paddle.x + paddle.width, 0);
-        grad.addColorStop(0, '#ff0055');
-        grad.addColorStop(1, '#ff4d4d');
-        ctx.fillStyle = grad;
-        ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
-        
-        ctx.shadowBlur = 0;
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = selectedBallColor;
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    function update() {
-        if (!gameActive) return;
-
-        ball.x += ball.speedX;
-        ball.y += ball.speedY;
-
-        if (ball.x + ball.radius >= canvas.width - 2 || ball.x - ball.radius <= 2) {
-            ball.speedX *= -1;
-            ball.x = ball.x - ball.radius <= 2 ? ball.radius + 3 : canvas.width - ball.radius - 3;
-        }
-        if (ball.y - ball.radius <= 2) {
-            ball.speedY *= -1;
-            ball.y = ball.radius + 3;
-        }
-
-        if (
-            ball.y + ball.radius >= paddle.y && 
-            ball.y - ball.radius <= paddle.y + paddle.height &&
-            ball.x >= paddle.x && 
-            ball.x <= paddle.x + paddle.width &&
-            ball.speedY > 0
-        ) {
-            ball.speedY *= -1;
-            score++;
+        function startGame() {
+            // 重置分數與狀態
+            score = 0;
             scoreEl.innerText = score;
+            isGameRunning = true;
+            
+            // 隱藏按鈕與訊息
+            startBtn.classList.add('hidden');
+            msgEl.innerText = "";
 
-            if (score >= 20) {
-                gameWin();
-                return;
+            // 重置球的位置
+            ball.x = canvas.width / 2;
+            ball.y = 50;
+            ball.speedY = 4; // 確保球是往下掉
+            ball.speedX = 4 * (Math.random() > 0.5 ? 1 : -1); // 隨機往左或往右
+
+            // 開始動畫迴圈
+            gameLoop();
+        }
+
+        function stopGame(message) {
+            isGameRunning = false;
+            cancelAnimationFrame(animationId); // 停止動畫
+            msgEl.innerText = message;
+            startBtn.classList.remove('hidden'); // 顯示按鈕
+        }
+
+        // --- 4. 繪圖 (Draw) ---
+        function draw() {
+            // 清除畫布 (這很重要，不然會有殘影)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 畫擋板 (藍色矩形)
+            ctx.fillStyle = paddle.color;
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+
+            // 畫球 (白色圓形)
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = ball.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // --- 5. 更新數據 (Update) ---
+        function update() {
+            // 移動球
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // 碰到左右牆壁 -> 反彈
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                ball.speedX = -ball.speedX;
             }
 
-            if (Math.abs(ball.speedY) < ball.maxSpeed) {
-                ball.speedY *= 1.05;
-                ball.speedX *= 1.05;
+            // 碰到頂部 -> 反彈
+            if (ball.y - ball.radius < 0) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // 碰到擋板偵測 (最關鍵的邏輯)
+            if (
+                ball.y + ball.radius >= paddle.y && // 球碰到底部高度
+                ball.x >= paddle.x &&               // 球在擋板左邊界以右
+                ball.x <= paddle.x + paddle.width   // 球在擋板右邊界以左
+            ) {
+                ball.speedY = -ball.speedY; // 垂直反彈
+                score++;
+                scoreEl.innerText = score;
+
+                // 獲勝判斷
+                if (score >= 20) {
+                    stopGame("恭喜獲勝！你達到20分了！");
+                }
+            }
+
+            // 碰到地板 -> 遊戲結束
+            if (ball.y - ball.radius > canvas.height) {
+                stopGame("遊戲結束！最終分數: " + score);
             }
         }
 
-        if (ball.y - ball.radius > canvas.height) {
-            gameOver();
+        // --- 6. 遊戲迴圈 (Loop) ---
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            update(); // 算位置
+            draw();   // 畫畫面
+            
+            // 請求下一幀動畫 (約每秒60次)
+            animationId = requestAnimationFrame(gameLoop);
         }
-    }
 
-    function gameLoop() {
-        if (!gameActive) return;
-        update();
-        draw();
-        animationId = requestAnimationFrame(gameLoop);
-    }
-
-    highScoreEl.innerText = highScore;
-</script>
+    </script>
 </body>
 </html>
