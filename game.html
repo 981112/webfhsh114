@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小白球 </title>
     <style>
-        /* 1. 網頁基本設定：黑底白字，內容置中 */
         body {
             margin: 0;
             background-color: #222; /* 深灰色背景 */
@@ -18,13 +17,13 @@
             height: 100vh; /* 滿版高度 */
         }
 
-        /* 2. 分數板：簡單的文字 */
+        /*分數板 */
         .score-board {
             font-size: 24px;
             margin-bottom: 10px;
         }
 
-        /* 3. 遊戲畫布：加上白色邊框 */
+        /*加上白色邊框 */
         canvas {
             background-color: #000; /* 畫布是黑的 */
             border: 2px solid white; /* 白框 */
@@ -32,7 +31,7 @@
             cursor: none; /* 移入畫布時隱藏滑鼠 */
         }
 
-        /* 4. 按鈕樣式 */
+        /*按鈕樣式 */
         button {
             margin-top: 15px;
             padding: 10px 20px;
@@ -48,7 +47,7 @@
             background-color: #45a049;
         }
 
-        /* 隱藏區塊用 */
+        /* 隱藏鼠標用 */
         .hidden {
             display: none;
         }
@@ -110,8 +109,6 @@
             if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
         });
 
-        // --- 3. 遊戲核心功能 ---
-
         function startGame() {
             // 重置分數與狀態
             score = 0;
@@ -128,7 +125,7 @@
             ball.speedY = 4; // 確保球是往下掉
             ball.speedX = 4 * (Math.random() > 0.5 ? 1 : -1); // 隨機往左或往右
 
-            // 開始動畫迴圈
+            // 動畫迴圈
             gameLoop();
         }
 
@@ -141,22 +138,20 @@
 
         // --- 4. 繪圖 (Draw) ---
         function draw() {
-            // 清除畫布 (這很重要，不然會有殘影)
+            // 清除畫布避免有殘影
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 畫擋板 (藍色矩形)
+            // 畫擋板 (矩形)
             ctx.fillStyle = paddle.color;
             ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
 
-            // 畫球 (白色圓形)
+            // 畫球 (圓形)
             ctx.beginPath();
             ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
             ctx.fillStyle = ball.color;
             ctx.fill();
             ctx.closePath();
         }
-
-        // --- 5. 更新數據 (Update) ---
         function update() {
             // 移動球
             ball.x += ball.speedX;
@@ -172,7 +167,7 @@
                 ball.speedY = -ball.speedY;
             }
 
-            // 碰到擋板偵測 (最關鍵的邏輯)
+            // 碰到擋板偵測
             if (
                 ball.y + ball.radius >= paddle.y && // 球碰到底部高度
                 ball.x >= paddle.x &&               // 球在擋板左邊界以右
@@ -182,13 +177,13 @@
                 score++;
                 scoreEl.innerText = score;
 
-                // 獲勝判斷
+                // 獲勝
                 if (score >= 20) {
                     stopGame("恭喜獲勝！你達到20分了！");
                 }
             }
 
-            // 碰到地板 -> 遊戲結束
+            //  遊戲結束
             if (ball.y - ball.radius > canvas.height) {
                 stopGame("遊戲結束！最終分數: " + score);
             }
